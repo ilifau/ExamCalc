@@ -11,7 +11,7 @@
       script.src = './Customizing/global/plugins/Services/UIComponent/UserInterfaceHook/ExamCalc/js/calculator.js';
       document.body.appendChild(script);
     } catch (error) {
-      console.error('❌ Rechner konnte nicht geladen werden:', error);
+      console.error('Rechner konnte nicht geladen werden:', error);
     }
   };
 
