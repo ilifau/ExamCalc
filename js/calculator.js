@@ -7,6 +7,7 @@
   let current = '';
   let lastResult = null;
   let lastOperator = null;
+  let lastOperand = null;
 
   if (!btn || !calc || !display) {
     console.error("Taschenrechner-Elemente nicht gefunden.");
@@ -40,10 +41,11 @@
               expression = lastResult + lastOperator + lastOperand;
             }
 
+            // Hier der Fix für die Wurzel: √ wird durch Math.sqrt ersetzt
             const parsed = expression
               .replace(/π/g, Math.PI)
               .replace(/e/g, Math.E)
-              .replace(/√/g, 'Math.sqrt')
+              .replace(/√(\d+)/g, 'Math.sqrt($1)')  // Der reguläre Ausdruck für Wurzel
               .replace(/\^/g, '**')
               .replace(/sin/g, 'Math.sin')
               .replace(/cos/g, 'Math.cos')
