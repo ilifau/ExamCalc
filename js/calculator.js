@@ -3,7 +3,11 @@
   const calc = document.getElementById('calculator');
   const display = document.getElementById('calc-display');
   const sciButtons = document.querySelectorAll('.sci');
+
   let current = '';
+  let lastResult = null;
+  let lastOperator = null;
+  let lastOperand = null;
 
   if (!btn || !calc || !display) {
     console.error("Taschenrechner-Elemente nicht gefunden.");
@@ -30,35 +34,63 @@
       switch (value) {
         case '=':
           try {
-            const parsed = current
+            let expression = current;
+
+            if (expression === '' && lastResult !== null && lastOperator) {
+              // Beispiel: Nur "+3" nach vorherigem Ergebnis
+              expression = lastResult + lastOperator + lastOperand;
+            }
+
+            // Hier der Fix für die Wurzel: √ wird durch Math.sqrt ersetzt
+            const parsed = expression
               .replace(/π/g, Math.PI)
               .replace(/e/g, Math.E)
-              .replace(/√/g, 'Math.sqrt')
+              .replace(/√(\d+)/g, 'Math.sqrt($1)')  // Der reguläre Ausdruck für Wurzel
               .replace(/\^/g, '**')
               .replace(/sin/g, 'Math.sin')
               .replace(/cos/g, 'Math.cos')
               .replace(/tan/g, 'Math.tan')
               .replace(/log/g, 'Math.log10')
               .replace(/ln/g, 'Math.log');
-            current = eval(parsed).toString();
+
+            const result = eval(parsed);
+            lastResult = result;
+            display.value = result;
+            current = '';
           } catch {
             current = 'Fehler';
+            display.value = current;
           }
           break;
+
         case 'AC':
           current = '';
+          lastResult = null;
+          lastOperator = null;
+          lastOperand = null;
+          display.value = '';
           break;
+
         case 'SCI':
           sciButtons.forEach(b => {
             b.style.display = b.style.display === 'none' ? 'inline-block' : 'none';
           });
-          return; // nicht anzeigen
-        default:
-          current += value;
-      }
+          return; // Nicht anzeigen
 
-      display.value = current;
-      if (value === '=') current = '';
+        default:
+          // Speichere letzten Operator & Operand, wenn gültig
+          if (/[\+\-\*\/]/.test(value)) {
+            lastOperator = value;
+            if (lastResult !== null) {
+              current = lastResult.toString();
+            }
+          } else if (!isNaN(parseFloat(value)) || value === '.') {
+            lastOperand = value;
+          }
+
+          current += value;
+          display.value = current;
+      }
     });
   });
 })();
