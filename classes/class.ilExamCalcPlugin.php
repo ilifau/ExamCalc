@@ -2,19 +2,19 @@
 
 class ilExamCalcPlugin extends ilUserInterfaceHookPlugin
 {
-    protected ?ilExamCalcConfig $config = null;
+    protected $config = null;
 
-    public function getPluginName(): string
+    public function getPluginName()
     {
         return "ExamCalc";
     }
 
-    public function hasConfiguration(): bool
+    public function hasConfiguration()
     {
         return true;
     }
 
-    public function getConfig(): ilExamCalcConfig
+    public function getConfig()
     {
         if (!$this->config) {
             require_once __DIR__ . "/class.ilExamCalcConfig.php";
@@ -23,14 +23,14 @@ class ilExamCalcPlugin extends ilUserInterfaceHookPlugin
         return $this->config;
     }
 
-    public function modifyGUI(string $a_comp, string $a_part, array $a_par = []): void
+    public function modifyGUI($a_comp, $a_part, $a_par = array())
     {
-        global $DIC;
-        if (!$DIC->offsetExists('tpl') || !$DIC['tpl'] instanceof ilGlobalTemplateInterface) {
+        global $tpl;
+
+        if (!$tpl instanceof ilTemplate) {
             return;
         }
 
-        $tpl = $DIC['tpl'];
         $cmd_class = strtolower($_GET["cmdClass"] ?? "");
         $current_ref_id = (int) ($_GET["ref_id"] ?? 0);
 
@@ -41,7 +41,7 @@ class ilExamCalcPlugin extends ilUserInterfaceHookPlugin
             return;
         }
 
-        if (!str_contains($cmd_class, "iltestplayer")) {
+        if (strpos($cmd_class, "iltestplayer") === false) {
             return;
         }
 

@@ -5,14 +5,12 @@
 
 class ilExamCalcConfigGUI extends ilPluginConfigGUI
 {
-    protected ilExamCalcPlugin $plugin;
+    protected $plugin;
 
-    public function performCommand(string $cmd): void
+    public function performCommand($cmd)
     {
         $this->plugin = $this->getPluginObject();
-        global $DIC;
-        $ctrl = $DIC->ctrl();
-        $tpl = $DIC->ui()->mainTemplate();
+        global $tpl, $ilCtrl;
 
         switch ($cmd) {
             case "configure":
@@ -25,38 +23,35 @@ class ilExamCalcConfigGUI extends ilPluginConfigGUI
         }
     }
 
-    protected function configure(): void
+    protected function configure()
     {
-        global $DIC;
-        $tpl = $DIC->ui()->mainTemplate();
+        global $tpl;
         $form = $this->initForm();
         $tpl->setContent($form->getHTML());
     }
 
-    protected function save(): void
+    protected function save()
     {
-        global $DIC;
-        $ctrl = $DIC->ctrl();
-        $tpl = $DIC->ui()->mainTemplate();
-
+        global $tpl, $ilCtrl;
         $form = $this->initForm();
+
         if ($form->checkInput()) {
             $this->plugin->getConfig()->set("global_enable", $form->getInput("global_enable") ? "1" : "");
             $this->plugin->getConfig()->set("refid_list", trim($form->getInput("refid_list") ?? ""));
-            $ctrl->redirect($this, "configure");
+            $ilCtrl->redirect($this, "configure");
         } else {
             $form->setValuesByPost();
             $tpl->setContent($form->getHTML());
         }
     }
 
-    protected function initForm(): ilPropertyFormGUI
+    protected function initForm()
     {
-        global $DIC;
-        $ctrl = $DIC->ctrl();
+        global $ilCtrl;
+
         $form = new ilPropertyFormGUI();
-        $form->setTitle("ExamCalc - Einstellungen");
-        $form->setFormAction($ctrl->getFormAction($this));
+        $form->setTitle("ExamCalc – Einstellungen");
+        $form->setFormAction($ilCtrl->getFormAction($this));
 
         $saved_global = $this->plugin->getConfig()->get("global_enable");
         $saved_refids = $this->plugin->getConfig()->get("refid_list");
@@ -66,8 +61,8 @@ class ilExamCalcConfigGUI extends ilPluginConfigGUI
         $cb->setChecked($saved_global === "1");
         $form->addItem($cb);
 
-        $ti = new ilTextInputGUI("Ref-IDs (Kommagetrennt)", "refid_list");
-        $ti->setInfo("Nur in diesen Kursen anzeigen (z. B. 1204,2409). Gilt nur wenn global deaktiviert ist.");
+        $ti = new ilTextInputGUI("Ref‑IDs (Kommagetrennt)", "refid_list");
+        $ti->setInfo("Nur in diesen Kursen anzeigen (z. B. 1204,2409), wenn global deaktiviert ist.");
         $ti->setValue($saved_refids);
         $form->addItem($ti);
 
