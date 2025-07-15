@@ -1,4 +1,6 @@
 (function () {
+  console.log("📦 examcalc.js wurde geladen");
+
   const insertCalculator = async () => {
     try {
       const response = await fetch('./Customizing/global/plugins/Services/UIComponent/UserInterfaceHook/ExamCalc/templates/calculator_overlay.html');
