@@ -33,19 +33,20 @@ public function modifyGUI(string $a_comp, string $a_part, array $a_par = []): vo
 
     $tpl = $DIC['tpl'];
 
-    // Sicherstellen, dass wir im Testkontext sind
-    $cmd_class = strtolower($_GET["cmdClass"] ?? "");
-    $cmd       = strtolower($_GET["cmd"] ?? "");
+    $cmd_class     = strtolower($_GET["cmdClass"] ?? "");
+    $cmd           = strtolower($_GET["cmd"] ?? "");
+    $fallback_cmd  = strtolower($_GET["fallbackCmd"] ?? "");
 
-    // Nur im Testplayer und nur bei showQuestion aktivieren
-    if (!str_contains($cmd_class, "iltestplayer") || $cmd !== "showquestion") {
+    $is_testplayer = str_contains($cmd_class, "iltestplayer");
+    $is_question_view = in_array("showquestion", [$cmd, $fallback_cmd]);
+
+    if (!$is_testplayer || !$is_question_view) {
+        error_log(" ExamCalc NICHT geladen – cmdClass=$cmd_class | cmd=$cmd | fallbackCmd=$fallback_cmd");
         return;
     }
 
-    // ✅ Nur dann einbinden
+    error_log(" ExamCalc geladen – cmdClass=$cmd_class | cmd=$cmd | fallbackCmd=$fallback_cmd");
     $tpl->addJavaScript("./Customizing/global/plugins/Services/UIComponent/UserInterfaceHook/ExamCalc/js/examcalc.js");
 }
-
-
 
 }
