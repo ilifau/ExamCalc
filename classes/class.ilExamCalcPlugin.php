@@ -25,19 +25,25 @@ class ilExamCalcPlugin extends ilUserInterfaceHookPlugin
 
 public function modifyGUI($a_comp, $a_part, $a_par = array())
 {
-    error_log("📦 ilExamCalcPlugin::modifyGUI() ausgeführt");
+    $config = $this->getConfig();
+    $enabled_global = $config->get("global_enable") === "1";
+    $allowed_refids = array_filter(array_map('trim', explode(",", $config->get("refid_list", ""))));
 
-    if (!isset($GLOBALS['tpl']) || !is_object($GLOBALS['tpl'])) {
-        error_log("❌ \$GLOBALS['tpl'] nicht gesetzt oder kein Objekt");
+    // Hole aktuelle ref_id, wenn im Testkontext
+    $current_ref_id = (int) ($_GET["ref_id"] ?? 0);
+    $is_allowed = in_array($current_ref_id, $allowed_refids);
+
+    if (!$enabled_global && !$is_allowed) {
+        error_log(" ExamCalc deaktiviert für ref_id=$current_ref_id");
         return;
     }
 
-    // ILIAS 7 verwendet ilGlobalPageTemplate → safe addJavaScript nutzen
+    // Dann einfügen:
     try {
         $GLOBALS['tpl']->addJavaScript("./Customizing/global/plugins/Services/UIComponent/UserInterfaceHook/ExamCalc/js/examcalc.js");
-        error_log("✅ examcalc.js eingebunden über GLOBAL tpl");
+        error_log(" examcalc.js eingebunden");
     } catch (Throwable $e) {
-        error_log("❌ Fehler beim Einfügen von JS: " . $e->getMessage());
+        error_log(" Fehler beim Einfügen von JS: " . $e->getMessage());
     }
 }
 
