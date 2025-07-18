@@ -18,4 +18,11 @@ class ilExamCalcConfig
     {
         $this->settings->set($key, $value);
     }
+
+public function getEmbedded(int $ref_id): string
+{
+    return "<p style='color:green;'>getEmbedded() in ExamCalcConfigGUI aufgerufen!</p>" . $this->initForm()->getHTML();
+}
+
+
 }

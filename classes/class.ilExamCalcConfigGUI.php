@@ -1,77 +1,113 @@
 <?php
 /**
  * @ilCtrl_isCalledBy ilExamCalcConfigGUI: ilObjComponentSettingsGUI
+ * @ilCtrl_Calls ilExamCalcConfigGUI: ilInfoScreenGUI
  */
 
 class ilExamCalcConfigGUI extends ilPluginConfigGUI
 {
     protected ilExamCalcPlugin $plugin;
+    protected ilCtrl $ctrl;
+    protected ilGlobalTemplateInterface $tpl;
+    protected ilLanguage $lng;
+
+    public function __construct()
+
+    {
+        //parent::__construct(); 
+        global $DIC;
+        $this->ctrl = $DIC->ctrl();
+        $this->tpl = $DIC->ui()->mainTemplate();
+        $this->lng = $DIC->language();
+    }
 
     public function performCommand(string $cmd): void
     {
         $this->plugin = $this->getPluginObject();
-        global $DIC;
-        $ctrl = $DIC->ctrl();
-        $tpl = $DIC->ui()->mainTemplate();
 
         switch ($cmd) {
             case "configure":
-            case "save":
-                $this->$cmd();
-                break;
+            case "showInfo":
             default:
-                $this->configure();
+                $this->showInfo();
                 break;
         }
     }
 
-    protected function configure(): void
+    protected function showInfo(): void
     {
-        global $DIC;
-        $tpl = $DIC->ui()->mainTemplate();
-        $form = $this->initForm();
-        $tpl->setContent($form->getHTML());
-    }
+        $info = new ilInfoScreenGUI($this);
+        $info->addSection($this->plugin->getPluginName() . " - " . $this->plugin->txt("configuration"));
+        $info->addProperty($this->lng->txt("version"), $this->plugin->getVersion());
+        $info->addProperty($this->lng->txt("status"), $this->plugin->txt("config_status_info"));
+        $info->addSection($this->plugin->txt("usage_instructions"));
+        $info->addProperty("", $this->plugin->txt("usage_instructions_text"));
 
-    protected function save(): void
-    {
-        global $DIC;
-        $ctrl = $DIC->ctrl();
-        $tpl = $DIC->ui()->mainTemplate();
-
-        $form = $this->initForm();
-        if ($form->checkInput()) {
-            $this->plugin->getConfig()->set("global_enable", $form->getInput("global_enable") ? "1" : "");
-            $this->plugin->getConfig()->set("refid_list", trim($form->getInput("refid_list") ?? ""));
-            $ctrl->redirect($this, "configure");
-        } else {
-            $form->setValuesByPost();
-            $tpl->setContent($form->getHTML());
+        $stats = $this->getUsageStatistics();
+        if ($stats['total'] > 0) {
+            $info->addSection($this->plugin->txt("statistics"));
+            $info->addProperty($this->plugin->txt("tests_with_calculator"), $stats['enabled']);
+            $info->addProperty($this->plugin->txt("total_tests"), $stats['total']);
         }
+
+        $this->tpl->setContent($info->getHTML());
     }
 
-    protected function initForm(): ilPropertyFormGUI
+    protected function getUsageStatistics(): array
     {
         global $DIC;
-        $ctrl = $DIC->ctrl();
+        $db = $DIC->database();
+
+        $result = $db->query("SELECT COUNT(*) as cnt FROM examcalc_test_settings WHERE enabled = 1");
+        $row = $db->fetchAssoc($result);
+        $enabled = (int) $row['cnt'];
+
+
+        return [
+            'enabled' => $enabled
+        ];
+    }
+
+    protected function initForm(int $ref_id): ilPropertyFormGUI
+    {
         $form = new ilPropertyFormGUI();
-        $form->setTitle("ExamCalc - Einstellungen");
-        $form->setFormAction($ctrl->getFormAction($this));
+        $form->setTitle("Taschenrechner-Konfiguration");
 
-        $saved_global = $this->plugin->getConfig()->get("global_enable");
-        $saved_refids = $this->plugin->getConfig()->get("refid_list");
+        $checkbox = new ilCheckboxInputGUI("Rechner aktivieren", "calc_enabled");
+        $checkbox->setInfo("Aktiviert den wissenschaftlichen Rechner für diesen Test.");
+        $checkbox->setValue("1");
+        $form->addItem($checkbox);
 
-        $cb = new ilCheckboxInputGUI("Global aktivieren?", "global_enable");
-        $cb->setInfo("Rechner wird in allen Tests angezeigt.");
-        $cb->setChecked($saved_global === "1");
-        $form->addItem($cb);
+        $hidden = new ilHiddenInputGUI("ref_id");
+        $hidden->setValue($ref_id);
+        $form->addItem($hidden);
 
-        $ti = new ilTextInputGUI("Ref-IDs (Kommagetrennt)", "refid_list");
-        $ti->setInfo("Nur in diesen Kursen anzeigen (z. B. 1204,2409). Gilt nur wenn global deaktiviert ist.");
-        $ti->setValue($saved_refids);
-        $form->addItem($ti);
+        // Fester URL-Fallback, da kein PluginController
+        $form->setFormAction("ilias.php?baseClass=iluipluginroutergui&cmd=saveExamCalc&cmdClass=ilExamSymbolsAdvancedGUI&ref_id=$ref_id");
+        $form->addCommandButton("saveExamCalc", "Speichern");
 
-        $form->addCommandButton("save", "Speichern");
         return $form;
     }
+
+    protected function loadCalcEnabled(int $ref_id): bool
+    {
+        $setting = new ilSetting("examcalc");
+        return $setting->get("enabled_" . $ref_id) === "1";
+    }
+
+public function getEmbeddedInputs(int $ref_id): string
+{
+    $enabled = $this->loadCalcEnabled($ref_id);
+    $checked = $enabled ? 'checked' : '';
+
+    return <<<HTML
+<div class="form-group">
+    <input type="checkbox" id="calc_enabled" name="calc_enabled" value="1" $checked>
+    <label for="calc_enabled">Rechner aktivieren</label>
+</div>
+HTML;
+}
+
+
+
 }
