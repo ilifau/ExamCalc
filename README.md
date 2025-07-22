@@ -1,3 +1,5 @@
+Weitere Entwicklung hier: https://github.com/andreschweigert/ExtendedTestSettings
+
 # ExamCalc
 
 ExamCalc ist ein einfaches ILIAS-Plugin, das einen wissenschaftlichen Taschenrechner im Testkontext bereitstellt.
